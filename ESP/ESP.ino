@@ -15,15 +15,15 @@ AsyncWebServer server(80);
 
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(9600);
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
-  Serial.println();
   timeClient.begin();
   timeClient.update();
+  Serial.begin(9600);
+  delay(25);
   Serial.println(WiFi.localIP());
   delay(1);
   Serial.println(timeClient.getHours());
