@@ -1,6 +1,6 @@
 #include <LiquidCrystal.h>
 #include <SoftwareSerial.h>
-
+#include <Servo.h>
 
 
 // initialize the library with the numbers of the interface pins
@@ -13,6 +13,7 @@ bool alarma=false;
 int h_alarma = 0, m_alarma = 0;
 
 
+Servo servo;
 
 LiquidCrystal lcd(7, 8, 9, 10, 11, 12); /// REGISTER SELECT PIN,ENABLE PIN,D4 PIN,D5 PIN, D6 PIN, D7 PIN
 SoftwareSerial esp(2, 3);
@@ -137,7 +138,7 @@ void loop() {
     }
     time_date_s++;
   }
-
+  Serial.println(analogRead(lightSensor));
   delay(1000);
   //adauga la counter ul pentru verificarea luminii si modifica temperatura trecuta pentru a putea face o medie intre temperatura pe care o masoara si cea pe care a masurat-o cu o secunda inainte
   light_count++;

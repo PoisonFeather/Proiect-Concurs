@@ -1,10 +1,29 @@
 <!DOCTYPE html>
 <html>
 
-<body>
+<body style="background-color: teal;">
     <h1>ESP</h1>
-    <form>
-        <input type="time" action="/?alarma=" />
+    <form action="http://192.168.0.206/?alarma" method="GET">
+        <div>
+            <label for="alarma">Seteaza alarma pe care o doresti </label>
+            <input type="number" name="alarma" id="alarma" />
+            <button>Trimite</button>
+        </div>
+    </form>
+    <form action="http://192.168.0.206/?alarmb" method="GET">
+        <div>
+            <label for="alarmb">Seteaza ora la care doresti sa primesti reminder-ul: </label>
+            <input type="number" name="alarmb" id="alarmb" />
+            <button>Trimite</button>
+        </div>
+    </form>
+    <form action="http://192.168.0.206/?reminde" method="GET">
+        <div>
+            <lable for="reminder">
+                Seteaza remindere:
+            </lable>
+            <input>
+        </div>
     </form>
 </body>
 
