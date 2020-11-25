@@ -16,7 +16,7 @@ AsyncWebServer server(80);
 IPAddress local_IP(192,168,0,206);
 IPAddress gateway(192,168,0,1);
 IPAddress subnet(255,255,255,0);
-String response="<!DOCTYPE html><html><head><meta name='viewport' content='width=device-width, initial-scale=1'></head><body style='background-color: teal;'><h1>ESP</h1><form action='http://192.168.0.206/?alarma' method='GET'><div><label for='alarma'>Seteaza alarma pe care o doresti </label><input type='number' name='alarma' id='alarma'/><button>Trimite</button>        </div>    </form>    <form action='http://192.168.0.206/?alarmb' method='GET'><div><label for='alarmb'>Seteaza ora la care doresti sa primesti reminder-ul: </label><input type='number' name='alarmb' id='alarmb' /><button>Trimite</button></div></form></body></html>";
+String response="<!DOCTYPEhtml><html><head><title>ESPCLOCK</title></head><body style='background-color:teal;'><h1>ESP</h1><form action='http://192.168.0.206/?alarma'method='GET'><div><label for='alarma'>Seteaza alarma pe care o doresti</label><input type='number' name='alarma' id='alarma'/><button>Trimite</button></div></form><form action='http://192.168.0.206/?alarmb' method='GET'><div><label for='alarmb'>Seteaza ora la care doresti sa primesti reminder-ul:</label><input type='number'name='alarmb'id='alarmb'/><button>Trimite</button></div></form><form action='http://192.168.0.206/?rpauza=' method='GET'><div><lablel for='pauza'>Ia o pauza de: </lablel><input type='number' name='rpauza'> minute  <button>Trimite</button></div></form><form action='http://192.168.0.206/?temper=' method='GET'><div><lablel for='temp'>Seteaza temperatura pe care o doresti </label><input type='number'name='temper'><button>Trimite</button></div></form></body></html>";
 
 void setup() {
   // put your setup code here, to run once:
@@ -36,7 +36,6 @@ void setup() {
   Serial.println(WiFi.localIP());
   timeClient.update();
   delay(25);
-  delay(1);
   Serial.println(timeClient.getHours());
   delay(1);
   Serial.println(timeClient.getMinutes());
@@ -67,10 +66,11 @@ void loop() {
     string_ready = true;
     arduino_data.trim();
     if (arduino_data == "TIME") {
-      delay(15);
+      timeClient.update();
+      Serial.println("TIME");
       Serial.println(timeClient.getHours());
       Serial.println(timeClient.getMinutes());
-      Serial.println(timeClient.getSeconds());
+      Serial.print(timeClient.getSeconds());
     }
   }
 }

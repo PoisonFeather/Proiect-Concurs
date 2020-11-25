@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html>
 
+<head>
+    <title>ESPCLOCK</title>
+</head>
+
 <body style="background-color: teal;">
     <h1>ESP</h1>
     <form action="http://192.168.0.206/?alarma" method="GET">
@@ -17,12 +21,10 @@
             <button>Trimite</button>
         </div>
     </form>
-    <form action="http://192.168.0.206/?reminde" method="GET">
+    <form action="http://192.168.0.206/?rpauza" method="GET">
         <div>
-            <lable for="reminder">
-                Seteaza remindere:
-            </lable>
-            <input>
+            <lablel for="pauza">Ia o pauza de 10 minute: </lablel>
+            <button>Pauza</button>
         </div>
     </form>
 </body>

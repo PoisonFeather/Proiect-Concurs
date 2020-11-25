@@ -1,17 +1,19 @@
-#include <LiquidCrystal.h>
-#include <SoftwareSerial.h>
-#include <DHT.h>
-#include <Servo.h>
+//Adaugare library-uri
+#include <LiquidCrystal.h>  //pt LCD
+#include <SoftwareSerial.h> //pt comunicarea cu esp-ul
+#include <DHT.h> //pt senzorul de umiditate/temperatura
+#include <Servo.h> // pt controlul servomotoarelor
 
-#define DHTPIN 4
-#define DHTTYPE DHT22
+#define DHTPIN 4   //pinul pentru senzorul de umiditate/temperatura
+#define DHTTYPE DHT22 //tipul de senzor
 
-Servo servo;
+Servo servo; //initializare servo
 
-DHT dht(DHTPIN, DHTTYPE);
-// initialize the library with the numbers of the interface pins
-int tempSensor = 0, tempVal = 0, prev_temp_val = 0, med_temp_val = 0;
+DHT dht(DHTPIN, DHTTYPE); //initializare senzor
 
+//initializare variabile
+int tempSensor = 0, tempVal = 0, prev_temp_val = 0, med_temp_val = 0, temp_dorita;
+bool temp_dorita_bool = false, temp_dorita_reset = false;
 int lightSensor = 1, lightValue = 0, light_count = 10;
 int piezoPin = A2;
 
@@ -19,26 +21,27 @@ bool time_date_bool = true;
 
 int time_date_h = 0, time_date_m, time_date_s;
 bool alarma = false;
-int h_alarma = 0, m_alarma = 0,alarma_light=0;
+int h_alarma = 0, m_alarma = 0, alarma_light = 0;
 int h_alarma_birou = 0, m_alarma_birou = 0; bool alarma_birou = false;
 int check_time = 0;
-bool pauza=false; int pauza_left=10,pauza_count=0;
+bool pauza = false; int pauza_left = 10, pauza_count = 0;
 float hum, temp, med_hum, prev_hum = 0;
+
 
 //sun icons in bytes
 byte sun_full[] = {B00100, B01110, B11111, B11111, B11111, B11111, B01110, B00100};
 byte sun_rise[] = {  B00000, B00000, B00000, B00000, B01110, B11111, B11111, B11111};
 //moon icon in bytes
-byte moon_half[] = { B00000,B00011,B00110,B01110,B11100,B11100,B11000,B11000};
+byte moon_half[] = { B00000, B00011, B00110, B01110, B11100, B11100, B11000, B11000};
 byte moon_rise[] = { B00000, B00000, B00000, B00110, B01000, B10000, B10000, B11000};
 byte moon_full[] = {  B00000, B11111, B11101, B11001, B11111, B10111, B11111, B00000};
 
 
 LiquidCrystal lcd(7, 8, 9, 10, 11, 12); /// REGISTER SELECT PIN,ENABLE PIN,D4 PIN,D5 PIN, D6 PIN, D7 PIN
-SoftwareSerial esp(2, 3);
+SoftwareSerial esp(2, 3); // RX TX
 
 void setup() {
- 
+
   dht.begin();
   int loading_phase = 0;
   String loading_char[3];
@@ -46,10 +49,12 @@ void setup() {
   loading_char[1] = "       -";
   loading_char[2] = "       |";
   lcd.begin(16, 2);
-  servo.detach();
-  lcd.createChar(0, sun_full); lcd.createChar(1, sun_rise);
 
-  lcd.createChar(2, moon_full); lcd.createChar(3, moon_rise); lcd.createChar(4, moon_half);
+  lcd.createChar(0, sun_full);
+  lcd.createChar(1, sun_rise);
+  lcd.createChar(2, moon_full);
+  lcd.createChar(3, moon_rise);
+  lcd.createChar(4, moon_half);
 
 
   tempVal = analogRead(tempSensor);
@@ -90,23 +95,19 @@ void setup() {
   }
   lcd.setCursor(0, 0);
   lcd.print(ip1); lcd.print("."); lcd.print(ip2); lcd.print("."); lcd.print(ip3); lcd.print("."); lcd.print(ip4);
+  time_date_s += 2;
   delay(2000);
-  time_date_s += 1;
   lcd.clear();
-   servo.attach(6);
+  servo.attach(6);
+  delay(5);
   servo.write(0);
-  delay(15);
   servo.detach();
+
 }
 
-
-
-
-
 void loop() {
-  
-  lcd.setCursor(0,0);
-  
+  lcd.setCursor(0, 0);
+
   String esp_data = "";
   boolean String_ready = false;
   while (esp.available()) {
@@ -122,10 +123,10 @@ void loop() {
       Serial.print("esp_data: ");
       Serial.print(esp_data);
       int esp_data_toInt = esp_data.toInt();
-      Serial.println(esp_data_toInt);
+      //Serial.println(esp_data_toInt);
       h_alarma = esp_data_toInt / 100;
       m_alarma = esp_data_toInt % 100;
-      Serial.print(h_alarma); Serial.println(m_alarma);
+      //Serial.print(h_alarma); Serial.println(m_alarma);
       alarma = true;
 
       lcd.clear();
@@ -135,7 +136,7 @@ void loop() {
       lcd.print(h_alarma); lcd.print(":"); lcd.print(m_alarma);
       tone(A2, 550, 500);
       delay(1500);
-      time_date_s++;
+      time_date_s += 2;
     }
     if (String_ready && sub_string == "alarmb") {
       esp_data.remove(0, 20);
@@ -151,17 +152,46 @@ void loop() {
       lcd.print("setat");
       tone(A2, 250, 500);
       delay(1500);
-       time_date_s++;  
+      time_date_s += 2;
     }
-    if(String_ready && sub_string=="rpauza"){
-      pauza=true;
+    if (String_ready && sub_string == "rpauza") {
+      esp_data.remove(0, 20);
+      int esp_data_toInt = esp_data.toInt();
+      pauza_left = esp_data_toInt;
+      pauza = true;
       lcd.clear();
-      lcd.setCursor(0,0);
-      lcd.print("Pauza");
-      tone(A2,440,500);
+      lcd.setCursor(0, 0);
+      lcd.print("Pauza ");
+      lcd.print(pauza_left);
+      lcd.print(" minute");
+      tone(A2, 440, 500);
       delay(1000);
+      time_date_s += 2;
     }
-   
+    if (String_ready && sub_string == "temper") {
+      esp_data.remove(0, 20);
+      int esp_data_toInt = esp_data.toInt();
+      temp_dorita = esp_data_toInt;
+      if (temp_dorita == 0 ) {
+        temp_dorita_bool = false;
+        temp_dorita_reset = false;
+      } else {
+        temp_dorita_bool = true;
+        temp_dorita_reset = true;
+        lcd.clear(); lcd.home();
+        lcd.print("Temperatura de");
+        lcd.setCursor(0, 1);
+        lcd.print(temp_dorita); lcd.print(char(223)); lcd.print("C setata");
+        delay(2000);
+        time_date_s += 2;
+      }
+    }
+    if(String_ready && sub_string=="TIME"){
+        time_date_h=esp.parseInt();
+        time_date_m=esp.parseInt();
+        time_date_s=esp.parseInt();
+        time_date_s++;
+      }
     lcd.clear();
   }
 
@@ -170,7 +200,7 @@ void loop() {
     time_date_s = 0;
     time_date_m++;
     check_time++;
-    
+
   }
   if (time_date_m >= 60) {
     time_date_m = 0;
@@ -193,21 +223,18 @@ void loop() {
     med_hum = (prev_hum + hum) / 2;
     prev_hum = hum;
     prev_temp_val = temp;
+    if (temp_dorita_reset && temp_dorita_bool != true) {
+      temp_dorita_bool = true;
+    }
   }
 
-  if (check_time == 10) {
-    esp.print("TIME");
-    delay(5);
-    //time_date_h=esp.parseInt();
-    while (esp.available() > 0) {
-      time_date_h = esp.parseInt();
-      time_date_m = esp.parseInt();
-      time_date_s = esp.parseInt();
-    }
-    Serial.print(time_date_h); Serial.print(":"); Serial.print(time_date_m); Serial.print(":"); Serial.println(time_date_s);
+  if (check_time == 1) {
+    esp.println("TIME");
     check_time = 0;
-    //time_date_s++;
+    time_date_s++;
+    esp.println("");
   }
+
   lcd.setCursor(0, 0);
   lcd.print(time_date_h); lcd.print(":"); lcd.print(time_date_m); lcd.print(":"); lcd.print(time_date_s); lcd.print(" ");
   lcd.print(abs(med_temp_val)); lcd.print(char(223)); lcd.print("C");
@@ -218,15 +245,16 @@ void loop() {
 
   if (alarma && time_date_h == h_alarma && time_date_m == m_alarma && time_date_s == 0) {
     servo.attach(6);
+    delay(50);
+    servo.write(180);
+    delay(15);
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("TREZIREA!!");
     lcd.setCursor(0, 1);
     lcd.print("ESTE ORA "); lcd.print(time_date_h); lcd.print(":"); lcd.print(time_date_m);
     int count_alarma = 0;
-   
-    servo.write(180);
-    int alarma_sensor=A3;
+    int alarma_sensor = A3;
     while (alarma) {
       alarma_light = analogRead(alarma_sensor);
       alarma_light = alarma_light / 100;
@@ -235,16 +263,15 @@ void loop() {
         delay(500);
         tone(A2, 350, 500);
         delay(500);
-        
       }
       Serial.println(alarma_light);
-      if (alarma_light > (lightValue/100)+1) {
-        servo.write(90);
+      if (alarma_light > (lightValue / 100) + 1) {
+        servo.write(0);
         delay(25);
         servo.detach();
-        alarma=false;
+        alarma = false;
       }
-      count_alarma++;
+      count_alarma += 2;
     }
     lcd.clear();
     time_date_s += count_alarma;
@@ -259,9 +286,9 @@ void loop() {
       tone(A2, 550, 500);
       delay(500);
       tone(A2, 750, 500);
-      delay(1000);
+      delay(500);
     }
-    time_date_s += 11;
+    time_date_s += 10;
     lcd.clear();
   }
   //alarma cu 10 minute inainte de a trebui sa fii la birou
@@ -269,7 +296,7 @@ void loop() {
     lcd.clear();
     lcd.home();
     lcd.print("Mai sunt");
-    lcd.setCursor(0,1);
+    lcd.setCursor(0, 1);
     lcd.print("10 minute");
     tone(A2, 450, 500);
     delay(1500);
@@ -297,35 +324,60 @@ void loop() {
   if (time_date_h >= 6 && time_date_h < 9)  lcd.write(byte(1));
   if (time_date_h >= 9 && time_date_h < 19) lcd.write(byte(0));
   if (time_date_h >= 19 && time_date_h < 21) lcd.write(byte(3));
-  if (time_date_h >= 21 && time_date_h < 0) lcd.write(byte(4)); 
+  if (time_date_h >= 21 && time_date_h < 0) lcd.write(byte(4));
   if (time_date_h >= 0 && time_date_h < 6) lcd.write(byte(2));
 
   lcd.print(" ");
   lcd.print(int(med_hum));
-  lcd.print("%");
-  if(pauza) lcd.print(pauza_left); 
-  if(pauza_count==60){
-    pauza_count=0;
+  lcd.print("% ");
+  if (pauza) lcd.print(pauza_left);
+  if (pauza_count == 60) {
+    pauza_count = 0;
     pauza_left--;
   }
-  
-  if(pauza_left==0){
-      pauza=false;
-      lcd.clear();
-      lcd.home();
-      lcd.print("Pauza s-a");
-      lcd.setCursor(0,1);
-      lcd.print("terminat");
-      tone(A2,550,500);
-      delay(500);
-      tone(A2,1024,500);
-      delay(500);
-      pauza_left=10;
-    }
-  delay(1000);
+
+  if (pauza_left == 0) {
+    pauza = false;
+    lcd.clear();
+    lcd.home();
+    lcd.print("Pauza s-a");
+    lcd.setCursor(0, 1);
+    lcd.print("terminat");
+    tone(A2, 550, 500);
+    delay(500);
+    tone(A2, 1024, 500);
+    delay(500);
+    time_date_s++;
+    pauza = 1;
+  }
+
+
+  if (temp_dorita < med_temp_val && temp_dorita_bool) {
+    lcd.clear(); lcd.home();
+    lcd.print("Temperatura e");
+    lcd.setCursor(0, 1);
+    lcd.print("peste nivelul setat");
+    tone(A2, 130, 250);
+    delay(1000);
+    time_date_s++;
+    temp_dorita_bool = false;
+    lcd.clear();
+  }
+  if (temp_dorita > med_temp_val && temp_dorita_bool) {
+    lcd.clear(); lcd.home();
+    lcd.print("Temperatura e");
+    lcd.setCursor(0, 1);
+    lcd.print("sub nivelul setat");
+    tone(A2, 130, 250);
+    delay(1000);
+    time_date_s++;
+    temp_dorita_bool = false;
+    lcd.clear();
+  }
+  delay(999);
   //adauga la counter ul pentru verificarea luminii si modifica temperatura trecuta pentru a putea face o medie intre temperatura pe care o masoara si cea pe care a masurat-o cu o secunda inainte
   light_count++;
   time_date_s++;
-  if(pauza) pauza_count++;
-  
+  if (pauza) pauza_count++;
+
 }
