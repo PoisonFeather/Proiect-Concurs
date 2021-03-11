@@ -26,7 +26,7 @@ void setup() {
   MDNS.begin("espclock");
   //WiFi.config(local_IP, gateway, subnet);
   while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
+    delay(500);w
     Serial.print(".");
   }
   

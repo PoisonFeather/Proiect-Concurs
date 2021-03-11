@@ -88,7 +88,7 @@ void setup() {
       time_date_s = esp.parseInt();
       delay(25);
       ip1 = ip1 + 100;
-      Serial.print(ip1); Serial.print("."); Serial.print(ip2); Serial.print("."); Serial.println(ip3);
+      Serial.print(ip1); Serial.print("."); Serial.print(ip2); Serial.print("."); Serial.print(ip3);Serial.print(".");Serial.println(ip4);
       Serial.print(time_date_h); Serial.print(" "); Serial.print(time_date_m); Serial.print(" "); Serial.println(time_date_s);
       time_date_bool = false;
     }
@@ -101,12 +101,122 @@ void setup() {
   servo.attach(6);
   delay(5);
   servo.write(0);
+  delay(15);
   servo.detach();
-
 }
 
 void loop() {
   lcd.setCursor(0, 0);
+  if (time_date_s >= 60) {
+    lcd.clear();
+    time_date_s = 0;
+    time_date_m++;
+    check_time++;
+
+  }
+  if (time_date_m >= 60) {
+    time_date_m = 0;
+    time_date_h++;
+    lcd.clear();
+  }
+  if (time_date_h >= 24) {
+    time_date_h = 0;
+  }
+  if (light_count == 10) {
+
+    lightValue = analogRead(lightSensor);
+    light_count = 0;
+    tempVal = dht.readTemperature();
+    hum = dht.readHumidity();
+    //tone(A2, 650, 250);
+    float temp;
+    temp = tempVal;
+    med_temp_val = (prev_temp_val + temp) / 2;
+    med_hum = (prev_hum + hum) / 2;
+    prev_hum = hum;
+    prev_temp_val = temp;
+    if (temp_dorita_reset && temp_dorita_bool != true) {
+      temp_dorita_bool = true;
+    }
+  }
+  
+  if (alarma && time_date_h == h_alarma && time_date_m == m_alarma && time_date_s == 0) {
+    servo.attach(6);
+    delay(50);
+    servo.write(180);
+    delay(15);
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("TREZIREA!!");
+    lcd.setCursor(0, 1);
+    lcd.print("ESTE ORA "); lcd.print(time_date_h); lcd.print(":"); lcd.print(time_date_m);
+    delay(500);
+    int count_alarma = 0;
+    int alarma_sensor = A3;
+    while (alarma) {
+      alarma_light = analogRead(alarma_sensor);
+      alarma_light = alarma_light / 100;
+      for (int i = 0; i < 1; i++) {
+        tone(A2, 420, 500);
+        delay(500);
+        tone(A2, 350, 500);
+        delay(500);
+      }
+      Serial.println(alarma_light);
+      if (alarma_light > (lightValue / 100) + 1) {
+        servo.write(0);
+        delay(25);
+        servo.detach();
+        alarma = false;
+      }
+      count_alarma += 2;
+    }
+    lcd.clear();
+    time_date_s += count_alarma;
+  }
+  if (alarma_birou && time_date_h == h_alarma_birou && time_date_m == m_alarma_birou && time_date_s == 0) {
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("La lucru!");
+    lcd.setCursor(0, 1);
+    lcd.print(time_date_h); lcd.print(":"); lcd.print(time_date_m);
+    for (int i = 0; i < 10; i++) {
+      tone(A2, 550, 500);
+      delay(500);
+      tone(A2, 750, 500);
+      delay(500);
+    }
+    time_date_s += 10;
+    lcd.clear();
+  }
+  //alarma cu 10 minute inainte de a trebui sa fii la birou
+  if (alarma_birou && time_date_h == h_alarma_birou && time_date_m == m_alarma_birou - 10 && time_date_s == 0) {
+    lcd.clear();
+    lcd.home();
+    lcd.print("Mai sunt");
+    lcd.setCursor(0, 1);
+    lcd.print("10 minute");
+    tone(A2, 450, 500);
+    delay(1500);
+    time_date_s += 2;
+    lcd.clear();
+  }
+
+  //alarma la 50 de minute pentru 5 minute pauza
+  if (time_date_m == 50 && time_date_s == 0 && time_date_h>=8 && time_date_h<=14) {
+    lcd.clear();
+    lcd.print("Ia o pauza de 5");
+    lcd.setCursor(0, 1);
+    lcd.print("minute");
+    for (int i = 0; i < 2; i++) {
+      tone(A2, 750, 500);
+      delay(500);
+      tone(A2, 650, 500);
+      delay(500);
+    }
+    time_date_s += 5;
+    lcd.clear();
+  }
 
   String esp_data = "";
   boolean String_ready = false;
@@ -186,49 +296,15 @@ void loop() {
         time_date_s += 2;
       }
     }
-    if(String_ready && sub_string=="TIME"){
-        time_date_h=esp.parseInt();
-        time_date_m=esp.parseInt();
-        time_date_s=esp.parseInt();
-        time_date_s++;
-      }
-    lcd.clear();
-  }
-
-  if (time_date_s >= 60) {
-    lcd.clear();
-    time_date_s = 0;
-    time_date_m++;
-    check_time++;
-
-  }
-  if (time_date_m >= 60) {
-    time_date_m = 0;
-    time_date_h++;
-    lcd.clear();
-  }
-  if (time_date_h >= 24) {
-    time_date_h = 0;
-  }
-  if (light_count == 10) {
-
-    lightValue = analogRead(lightSensor);
-    light_count = 0;
-    tempVal = dht.readTemperature();
-    hum = dht.readHumidity();
-    //tone(A2, 650, 250);
-    float temp;
-    temp = tempVal;
-    med_temp_val = (prev_temp_val + temp) / 2;
-    med_hum = (prev_hum + hum) / 2;
-    prev_hum = hum;
-    prev_temp_val = temp;
-    if (temp_dorita_reset && temp_dorita_bool != true) {
-      temp_dorita_bool = true;
+    if (String_ready && sub_string == "TIME") {
+      time_date_h = esp.parseInt();
+      time_date_m = esp.parseInt();
+      time_date_s = esp.parseInt();
+      time_date_s++;
     }
+    lcd.clear();
   }
-
-  if (check_time == 1) {
+  if (check_time == 15) {
     esp.println("TIME");
     check_time = 0;
     time_date_s++;
@@ -240,87 +316,6 @@ void loop() {
   lcd.print(abs(med_temp_val)); lcd.print(char(223)); lcd.print("C");
   lcd.setCursor(0, 1);
   lcd.print("Lumina "); lcd.print(lightValue / 100); lcd.print(" ");
-
-
-
-  if (alarma && time_date_h == h_alarma && time_date_m == m_alarma && time_date_s == 0) {
-    servo.attach(6);
-    delay(50);
-    servo.write(180);
-    delay(15);
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("TREZIREA!!");
-    lcd.setCursor(0, 1);
-    lcd.print("ESTE ORA "); lcd.print(time_date_h); lcd.print(":"); lcd.print(time_date_m);
-    int count_alarma = 0;
-    int alarma_sensor = A3;
-    while (alarma) {
-      alarma_light = analogRead(alarma_sensor);
-      alarma_light = alarma_light / 100;
-      for (int i = 0; i < 1; i++) {
-        tone(A2, 420, 500);
-        delay(500);
-        tone(A2, 350, 500);
-        delay(500);
-      }
-      Serial.println(alarma_light);
-      if (alarma_light > (lightValue / 100) + 1) {
-        servo.write(0);
-        delay(25);
-        servo.detach();
-        alarma = false;
-      }
-      count_alarma += 2;
-    }
-    lcd.clear();
-    time_date_s += count_alarma;
-  }
-  if (alarma_birou && time_date_h == h_alarma_birou && time_date_m == m_alarma_birou && time_date_s == 0) {
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("La lucru!");
-    lcd.setCursor(0, 1);
-    lcd.print(time_date_h); lcd.print(":"); lcd.print(time_date_m);
-    for (int i = 0; i < 10; i++) {
-      tone(A2, 550, 500);
-      delay(500);
-      tone(A2, 750, 500);
-      delay(500);
-    }
-    time_date_s += 10;
-    lcd.clear();
-  }
-  //alarma cu 10 minute inainte de a trebui sa fii la birou
-  if (alarma_birou && time_date_h == h_alarma_birou && time_date_m == m_alarma_birou - 10 && time_date_s == 0) {
-    lcd.clear();
-    lcd.home();
-    lcd.print("Mai sunt");
-    lcd.setCursor(0, 1);
-    lcd.print("10 minute");
-    tone(A2, 450, 500);
-    delay(1500);
-    time_date_s += 2;
-    lcd.clear();
-  }
-
-  //alarma la 50 de minute pentru 5 minute pauza
-  if (time_date_m == 50 && time_date_s == 0) {
-    lcd.clear();
-    lcd.print("Ia o pauza de 5");
-    lcd.setCursor(0, 1);
-    lcd.print("minute");
-    for (int i = 0; i < 2; i++) {
-      tone(A2, 750, 500);
-      delay(500);
-      tone(A2, 650, 500);
-      delay(500);
-    }
-    time_date_s += 5;
-    lcd.clear();
-  }
-
-
   if (time_date_h >= 6 && time_date_h < 9)  lcd.write(byte(1));
   if (time_date_h >= 9 && time_date_h < 19) lcd.write(byte(0));
   if (time_date_h >= 19 && time_date_h < 21) lcd.write(byte(3));
@@ -368,7 +363,7 @@ void loop() {
     lcd.print("Temperatura e");
     lcd.setCursor(0, 1);
     lcd.print("sub nivelul setat");
-    tone(A2, 130, 250);
+    tone(A2 , 130, 250);
     delay(1000);
     time_date_s++;
     temp_dorita_bool = false;
@@ -379,5 +374,4 @@ void loop() {
   light_count++;
   time_date_s++;
   if (pauza) pauza_count++;
-
 }
